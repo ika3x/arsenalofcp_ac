@@ -1,4 +1,4 @@
-class MutLists {
+class MutList {
     private static final int DEFAULT_CAPACITY = 8;
 
     public static class IntMutList implements Iterable<Integer> {
