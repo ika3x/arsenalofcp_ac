@@ -1,5 +1,4 @@
 class LpIvTuplePQ {
-    
     private static final int DEFAULT_CAPACITY = 8;
 
     private int size;
