@@ -145,7 +145,7 @@ class BlockList implements Iterable<Long> {
     //  BlockList Main Body
     // ────────────────────────────────────────────────
 
-    private static final int DEFAULT_BLOCK = 1024;
+    private static final int DEFAULT_BLOCK = 750;
 
     private final ArrayList<LongMutList> blocks;
     private final BlockBIT               bit;
