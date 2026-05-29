@@ -99,4 +99,16 @@ class SegTreei64 {
         } while ((r & -r) != r);
         return 0;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("SegTreei64([");
+        for (int i = 0; i < N; i++) {
+            sb.append(data[i + N]);
+            if (i < N - 1) sb.append(',').append(' ');
+        }
+        sb.append("])");
+        return sb.toString();
+    }
 }
