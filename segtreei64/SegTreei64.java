@@ -25,7 +25,7 @@ class SegTreei64 {
     }
 
     public void set(int p, long x) {
-        if (p < 0 || p >= MAX) throw new IndexOutOfBoundsException();
+        exclusiveRangeCheck(p);
         data[p += N] = x;
         while (p > 1) {
             p >>= 1;
@@ -39,7 +39,13 @@ class SegTreei64 {
     }
 
     public long prod(int l, int r) {
-        if (l < 0 || r > MAX || l > r) throw new IllegalArgumentException();
+        if (l > r) {
+            throw new IllegalArgumentException(
+                String.format("Invalid range: [%d, %d)", l, r)
+            );
+        }
+        inclusiveRangeCheck(l);
+        inclusiveRangeCheck(r);
         long sumLeft = E, sumRight = E;
         for (l += N, r += N; l < r; l >>= 1, r >>= 1) {
             if ((l & 1) == 1) sumLeft = op.applyAsLong(sumLeft, data[l++]);
@@ -53,8 +59,10 @@ class SegTreei64 {
     }
 
     public int maxRight(int l, LongPredicate f) {
-        if (l < 0 || l > MAX) throw new IllegalArgumentException();
-        if (!f.test(E)) throw new IllegalArgumentException();
+        inclusiveRangeCheck(l);
+        if (!f.test(E)) {
+            throw new IllegalArgumentException("Identity element must satisfy the condition.");
+        }
         if (l == MAX) return MAX;
         l += N;
         long sum = E;
@@ -77,8 +85,10 @@ class SegTreei64 {
     }
 
     public int minLeft(int r, LongPredicate f) {
-        if (r < 0 || r > MAX) throw new IllegalArgumentException();
-        if (!f.test(E)) throw new IllegalArgumentException();
+        inclusiveRangeCheck(r);
+        if (!f.test(E)) {
+            throw new IllegalArgumentException("Identity element must satisfy the condition.");
+        }
         if (r == 0) return 0;
         r += N;
         long sum = E;
@@ -98,6 +108,36 @@ class SegTreei64 {
             sum = op.applyAsLong(data[r], sum);
         } while ((r & -r) != r);
         return 0;
+    }
+
+    private void exclusiveRangeCheck(int p) {
+        if (p < 0 || p >= MAX) {
+            throw new IndexOutOfBoundsException(
+                String.format("Index %d out of bounds for the range [%d, %d).", p, 0, MAX)
+            );
+        }
+    }
+
+    private void inclusiveRangeCheck(int p) {
+        if (p < 0 || p > MAX) {
+            throw new IndexOutOfBoundsException(
+                String.format("Index %d out of bounds for the range [%d, %d].", p, 0, MAX)
+            );
+        }
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("SegTreei64([");
+        for (int i = 0; i < N; i++) {
+            sb.append(data[i + N]);
+            if (i < N - 1) sb.append(',').append(' ');
+        }
+        sb.append("])");
+        return sb.toString();
+    }
+}
     }
 
     @Override

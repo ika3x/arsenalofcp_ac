@@ -74,6 +74,10 @@ class RHF {
         private final int len;
         private long[] preh;
 
+        /*
+        * RollingHash equals:
+        * r1.getRh() == r2.getRh()
+        */
         @Deprecated
         @Override
         public boolean equals(Object obj) {
@@ -191,6 +195,14 @@ class RHF {
         return (int)((s1 * pb.get(s2_length) % MOD + s2) % MOD);
     }
 
+    public long getPb(int index) {
+        if (index >= pb.size()) {
+            growPowTable(index + 3);
+        }
+
+        return pb.get(index);
+    }
+
     @Override
     public String toString() {
         return "RHF(mod="+MOD+", base="+BASE+", id="+this_id+")";
@@ -241,14 +253,14 @@ record Rh3Pair(int h1, int h2, int h3) implements Comparable<Rh3Pair> {
 record Rh4Pair(int h1, int h2, int h3, int h4) implements Comparable<Rh4Pair> {
     @Override
     public final int hashCode() {
-        return (h1 * 9973) + ((h2 * 97) ^ h3);
+        return (h1 * (929285503 ^ h4)) + ((h2 * h3) - h4);
     }
 
     @Override
     public final boolean equals(Object obj) {
         if (!(obj instanceof Rh4Pair)) {return false;}
         Rh4Pair o = (Rh4Pair) obj;
-        return this.h1 == o.h1 && this.h2 == o.h2 && this.h3 == o.h3; 
+        return this.h1 == o.h1 && this.h2 == o.h2 && this.h3 == o.h3 && this.h4 == o.h4; 
     }
 
     @Override

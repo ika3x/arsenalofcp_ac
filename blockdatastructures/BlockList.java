@@ -389,6 +389,46 @@ class BlockList implements Iterable<Long> {
         };
     }
 
+    public PrimitiveIterator.OfLong rangedIterator(int l, int r) {
+        if (l < 0 || r > totalSize || l > r) throw new IndexOutOfBoundsException();
+        
+        return new PrimitiveIterator.OfLong() {
+            private int currentIdx = l;
+            private final int endIdx = r;
+            
+            private int bi;
+            private int posInBlock;
+            private PrimitiveIterator.OfLong cur;
+
+            {
+                int[] startPos = bit.find(l, blocks.size());
+                bi = startPos[0] - 1;
+                posInBlock = startPos[1];
+                cur = blocks.get(bi).iterator();
+                
+                for (int i = 0; i < posInBlock; i++) {
+                    cur.nextLong();
+                }
+            }
+
+            public boolean hasNext() {
+                return currentIdx < endIdx;
+            }
+
+            public long nextLong() {
+                if (!hasNext()) throw new NoSuchElementException();
+                
+                if (!cur.hasNext()) {
+                    bi++;
+                    cur = blocks.get(bi).iterator();
+                }
+                
+                currentIdx++;
+                return cur.nextLong();
+            }
+        };
+    }
+
     private static PrimitiveIterator.OfLong emptyLongIterator() {
         return new PrimitiveIterator.OfLong() {
             public boolean hasNext() { return false; }

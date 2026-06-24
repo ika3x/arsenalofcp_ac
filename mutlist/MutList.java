@@ -415,7 +415,7 @@ class MutList {
 
         public String toCPString() {
             if (size == 0) {return "";}
-            StringBuilder sb = new StringBuilder(Long.toString(dat[0]));
+            StringBuilder sb = new StringBuilder(Double.toString(dat[0]));
             for (int i = 1; i < size; i++) {
                 sb.append(' ').append(dat[i]);
             }
