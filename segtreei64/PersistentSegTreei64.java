@@ -1,5 +1,5 @@
 /**
- * PersistentSegTree
+ * PersistentSegTreei64 - all primitive!!
  * ---- Methods ----
  *   build / new            : O(N)
  *   set                    : O(log N)
@@ -116,7 +116,7 @@ class PersistentSegTreei64 {
         return val[roots[version]];
     }
 
-    // -------- 単一バージョン版 (latestVersion を使う簡易API) --------
+    // -------- Latest APIs --------
 
     public int setL(int p, long x) {
         return set(latestVersion(), p, x);

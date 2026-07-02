@@ -111,7 +111,7 @@ class PersistentSegTree<S> {
         return val[roots[version]];
     }
 
-    // -------- 単一バージョン版 (latestVersion を使う簡易API) --------
+    // -------- Latest APIs --------
 
     public int setL(int p, S x) {
         return set(latestVersion(), p, x);
