@@ -74,10 +74,10 @@ class RHF {
         private final int len;
         private long[] preh;
 
-        /*
-        * RollingHash equals:
-        * r1.getRh() == r2.getRh()
-        */
+        /**
+          * RollingHash equals:
+          * r1.getRh() == r2.getRh()
+          */
         @Deprecated
         @Override
         public boolean equals(Object obj) {

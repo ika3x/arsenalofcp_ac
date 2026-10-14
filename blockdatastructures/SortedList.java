@@ -311,6 +311,7 @@ class SortedList implements Iterable<Long> {
         int idx = lowerBound(x);
         return idx < totalSize && get(idx) == x;
     }
+    public int countEqual(long x)          { return upperBound(x) - lowerBound(x); }
     public int countLess(long x)           { return lowerBound(x); }
     public int countLessOrEqual(long x)    { return upperBound(x); }
     public int countGreaterOrEqual(long x) { return totalSize - lowerBound(x); }

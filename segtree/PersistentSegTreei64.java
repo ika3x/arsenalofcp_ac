@@ -8,11 +8,6 @@
  *   RAM                    : O(N + Q log N)
  */
 class PersistentSegTreei64 {
-    @FunctionalInterface
-    public interface MergeOpi64 {
-        long apply(long l, long r);
-    }
-
     private int nodeCount;
     private final int[] left, right;
     private final long[] val;
@@ -22,7 +17,7 @@ class PersistentSegTreei64 {
 
     private final int MAX;
     private final int N;
-    private final MergeOpi64 op;
+    private final java.util.function.LongBinaryOperator op;
     private final long E;
 
     private static final int NULL = 0;
@@ -30,10 +25,12 @@ class PersistentSegTreei64 {
     // set(): ~ maxVersions times
     @SuppressWarnings("unchecked")
     public PersistentSegTreei64(int n,
-                             MergeOpi64 op,
+                             java.util.function.LongBinaryOperator op,
                              long e,
                              int maxVersions) {
         this.MAX = n;
+        if (n == 1) n = 2;
+        
         int k = 1;
         while (k < n) k <<= 1;
         this.N = k;
@@ -51,16 +48,18 @@ class PersistentSegTreei64 {
         nodeCount = 1;
         val[NULL] = E;
 
-        roots[0] = buildEmpty(1, N);
+        roots[0] = buildEmpty(0, N);
         versionCount = 1;
     }
 
     @SuppressWarnings("unchecked")
     public PersistentSegTreei64(long[] dat,
-                             MergeOpi64 op,
+                             java.util.function.LongBinaryOperator op,
                              long e,
                              int maxVersions) {
         this.MAX = dat.length;
+        if (dat.length == 1) { dat = Arrays.copyOf(dat, 2); dat[1] = e; }
+
         int k = 1;
         while (k < dat.length) k <<= 1;
         this.N = k;
@@ -78,7 +77,7 @@ class PersistentSegTreei64 {
         nodeCount = 1;
         val[NULL] = E;
 
-        roots[0] = build(dat, 1, N);
+        roots[0] = build(dat, 0, N);
         versionCount = 1;
     }
 
@@ -116,6 +115,256 @@ class PersistentSegTreei64 {
         return val[roots[version]];
     }
 
+    // -------- Boundary Search APIs --------
+
+    public int maxRight(int version,
+                        int l,
+                        java.util.function.LongPredicate f) {
+        checkVersion(version);
+        inclusiveRangeCheck(l);
+
+        if (!f.test(E)) {
+            throw new IllegalArgumentException(
+                "Identity element must satisfy the condition.");
+        }
+        if (l == MAX) return MAX;
+
+        @SuppressWarnings("unchecked")
+        long[] sum = new long[1];
+        sum[0] = E;
+
+        int result = maxRight(
+            roots[version],
+            l,
+            0,
+            N,
+            sum,
+            f
+        );
+
+        return Math.min(result, MAX);
+    }
+
+    public int minLeft(int version,
+                       int r,
+                       java.util.function.LongPredicate f) {
+        checkVersion(version);
+        inclusiveRangeCheck(r);
+
+        if (!f.test(E)) {
+            throw new IllegalArgumentException(
+                "Identity element must satisfy the condition.");
+        }
+        if (r == 0) return 0;
+
+        @SuppressWarnings("unchecked")
+        long[] sum = new long[1];
+        sum[0] = E;
+
+        int result = minLeft(
+            roots[version],
+            r,
+            0,
+            N,
+            sum,
+            f
+        );
+
+        return Math.max(0, Math.min(result, MAX));
+    }
+
+    // -------- Internal: Boundary Search --------
+
+    private int maxRight(int node,
+                         int l,
+                         int nodeL,
+                         int nodeR,
+                         long[] sum,
+                         java.util.function.LongPredicate f) {
+        if (nodeR <= l) {
+            return nodeR;
+        }
+
+        if (l <= nodeL) {
+            long next = op.applyAsLong(sum[0], val[node]);
+
+            if (f.test(next)) {
+                sum[0] = next;
+                return nodeR;
+            }
+
+            return maxRightFail(
+                node,
+                nodeL,
+                nodeR,
+                sum,
+                f
+            );
+        }
+
+        int mid = (nodeL + nodeR) >> 1;
+
+        int result = maxRight(
+            left[node],
+            l,
+            nodeL,
+            mid,
+            sum,
+            f
+        );
+
+        if (result != mid) {
+            return result;
+        }
+
+        return maxRight(
+            right[node],
+            l,
+            mid,
+            nodeR,
+            sum,
+            f
+        );
+    }
+
+    private int maxRightFail(int node,
+                             int nodeL,
+                             int nodeR,
+                             long[] sum,
+                             java.util.function.LongPredicate f) {
+        if (nodeR - nodeL <= 1) {
+            return nodeL;
+        }
+
+        int mid = (nodeL + nodeR) >> 1;
+        int lc = left[node];
+        int rc = right[node];
+
+        long next = op.applyAsLong(sum[0], val[lc]);
+
+        if (!f.test(next)) {
+            return maxRightFail(
+                lc,
+                nodeL,
+                mid,
+                sum,
+                f
+            );
+        }
+
+        sum[0] = next;
+
+        next = op.applyAsLong(sum[0], val[rc]);
+
+        if (!f.test(next)) {
+            return maxRightFail(
+                rc,
+                mid,
+                nodeR,
+                sum,
+                f
+            );
+        }
+
+        sum[0] = next;
+        return nodeR;
+    }
+
+    private int minLeft(int node,
+                        int r,
+                        int nodeL,
+                        int nodeR,
+                        long[] sum,
+                        java.util.function.LongPredicate f) {
+        if (r <= nodeL) {
+            return nodeL;
+        }
+
+        if (nodeR <= r) {
+            long next = op.applyAsLong(val[node], sum[0]);
+
+            if (f.test(next)) {
+                sum[0] = next;
+                return nodeL;
+            }
+
+            return minLeftFail(
+                node,
+                nodeL,
+                nodeR,
+                sum,
+                f
+            );
+        }
+
+        int mid = (nodeL + nodeR) >> 1;
+
+        int result = minLeft(
+            right[node],
+            r,
+            mid,
+            nodeR,
+            sum,
+            f
+        );
+
+        if (result != mid) {
+            return result;
+        }
+
+        return minLeft(
+            left[node],
+            r,
+            nodeL,
+            mid,
+            sum,
+            f
+        );
+    }
+
+    private int minLeftFail(int node,
+                            int nodeL,
+                            int nodeR,
+                            long[] sum,
+                            java.util.function.LongPredicate f) {
+        if (nodeR - nodeL <= 1) {
+            return nodeR;
+        }
+
+        int mid = (nodeL + nodeR) >> 1;
+        int lc = left[node];
+        int rc = right[node];
+
+        long next = op.applyAsLong(val[rc], sum[0]);
+
+        if (!f.test(next)) {
+            return minLeftFail(
+                rc,
+                mid,
+                nodeR,
+                sum,
+                f
+            );
+        }
+
+        sum[0] = next;
+
+        next = op.applyAsLong(val[lc], sum[0]);
+
+        if (!f.test(next)) {
+            return minLeftFail(
+                lc,
+                nodeL,
+                mid,
+                sum,
+                f
+            );
+        }
+
+        sum[0] = next;
+        return nodeL;
+    }
+
     // -------- Latest APIs --------
 
     public int setL(int p, long x) {
@@ -134,6 +383,17 @@ class PersistentSegTreei64 {
         return allProd(latestVersion());
     }
 
+    public int maxRightL(int l,
+                        java.util.function.LongPredicate f) {
+        return maxRight(latestVersion(), l, f);
+    }
+
+    public int minLeftL(int r,
+                       java.util.function.LongPredicate f) {
+        return minLeft(latestVersion(), r, f);
+    }
+
+
     // -------- Internal: Node Util --------
 
     private int newNode(int l, int r, long v) {
@@ -151,7 +411,7 @@ class PersistentSegTreei64 {
         int mid = (nodeL + nodeR) >> 1;
         int lc  = buildEmpty(nodeL, mid);
         int rc  = buildEmpty(mid, nodeR);
-        return newNode(lc, rc, op.apply(val[lc], val[rc]));
+        return newNode(lc, rc, op.applyAsLong(val[lc], val[rc]));
     }
 
     private int build(long[] dat, int nodeL, int nodeR) {
@@ -162,7 +422,7 @@ class PersistentSegTreei64 {
         int mid = (nodeL + nodeR) >> 1;
         int lc  = build(dat, nodeL, mid);
         int rc  = build(dat, mid, nodeR);
-        return newNode(lc, rc, op.apply(val[lc], val[rc]));
+        return newNode(lc, rc, op.applyAsLong(val[lc], val[rc]));
     }
 
     private int set(int node, int p, long x, int nodeL, int nodeR) {
@@ -178,7 +438,7 @@ class PersistentSegTreei64 {
             lc = left[node];
             rc = set(right[node], p, x, mid, nodeR);
         }
-        return newNode(lc, rc, op.apply(val[lc], val[rc]));
+        return newNode(lc, rc, op.applyAsLong(val[lc], val[rc]));
     }
 
     private long get(int node, int p, int nodeL, int nodeR) {
@@ -192,7 +452,7 @@ class PersistentSegTreei64 {
         if (l <= nodeL && nodeR <= r) return val[node];
         if (r <= nodeL || nodeR <= l) return E;
         int mid = (nodeL + nodeR) >> 1;
-        return op.apply(
+        return op.applyAsLong(
             prod(left[node],  l, r, nodeL, mid),
             prod(right[node], l, r, mid, nodeR)
         );

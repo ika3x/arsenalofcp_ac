@@ -1,11 +1,14 @@
 class SegTreei64 {
     final int MAX;
+
     final int N;
-    final LongBinaryOperator op;
+    final java.util.function.LongBinaryOperator op;
     final long E;
+
     final long[] data;
 
-    public SegTreei64(int n, LongBinaryOperator op, long e) {
+    @SuppressWarnings("unchecked")
+    public SegTreei64(int n, java.util.function.LongBinaryOperator op, long e) {
         this.MAX = n;
         int k = 1;
         while (k < n) k <<= 1;
@@ -13,28 +16,34 @@ class SegTreei64 {
         this.E = e;
         this.op = op;
         this.data = new long[N << 1];
-        Arrays.fill(data, E);
+        java.util.Arrays.fill(data, E);
     }
 
-    public SegTreei64(long[] dat, LongBinaryOperator op, long e) {
+    public SegTreei64(long[] dat, java.util.function.LongBinaryOperator op, long e) {
         this(dat.length, op, e);
-        System.arraycopy(dat, 0, data, N, dat.length);
+        build(dat);
+    }
+
+    private void build(long[] dat) {
+        int l = dat.length;
+        System.arraycopy(dat, 0, data, N, l);
         for (int i = N - 1; i > 0; i--) {
-            data[i] = op.applyAsLong(data[i << 1], data[i << 1 | 1]);
+            data[i] = op.applyAsLong(data[i << 1 | 0], data[i << 1 | 1]);
         }
     }
 
     public void set(int p, long x) {
         exclusiveRangeCheck(p);
         data[p += N] = x;
-        while (p > 1) {
+        p >>= 1;
+        while (p > 0) {
+            data[p] = op.applyAsLong(data[p << 1 | 0], data[p << 1 | 1]);
             p >>= 1;
-            data[p] = op.applyAsLong(data[p << 1], data[p << 1 | 1]);
         }
     }
 
     public long get(int p) {
-        if (p < 0 || p >= MAX) throw new IndexOutOfBoundsException();
+        exclusiveRangeCheck(p);
         return data[p + N];
     }
 
@@ -46,10 +55,32 @@ class SegTreei64 {
         }
         inclusiveRangeCheck(l);
         inclusiveRangeCheck(r);
-        long sumLeft = E, sumRight = E;
-        for (l += N, r += N; l < r; l >>= 1, r >>= 1) {
+        long sumLeft = E;
+        long sumRight = E;
+        l += N; r += N;
+        while (l < r) {
             if ((l & 1) == 1) sumLeft = op.applyAsLong(sumLeft, data[l++]);
             if ((r & 1) == 1) sumRight = op.applyAsLong(data[--r], sumRight);
+            l >>= 1; r >>= 1;
+        }
+        return op.applyAsLong(sumLeft, sumRight);
+    }
+
+    public long prodOrE(int l, int r) {
+        inclusiveRangeCheck(l);
+        inclusiveRangeCheck(r);
+
+        if (l > r) {
+            return E;
+        }
+
+        long sumLeft = E;
+        long sumRight = E;
+        l += N; r += N;
+        while (l < r) {
+            if ((l & 1) == 1) sumLeft = op.applyAsLong(sumLeft, data[l++]);
+            if ((r & 1) == 1) sumRight = op.applyAsLong(data[--r], sumRight);
+            l >>= 1; r >>= 1;
         }
         return op.applyAsLong(sumLeft, sumRight);
     }
@@ -58,7 +89,7 @@ class SegTreei64 {
         return data[1];
     }
 
-    public int maxRight(int l, LongPredicate f) {
+    public int maxRight(int l, java.util.function.LongPredicate f) {
         inclusiveRangeCheck(l);
         if (!f.test(E)) {
             throw new IllegalArgumentException("Identity element must satisfy the condition.");
@@ -70,7 +101,7 @@ class SegTreei64 {
             l >>= Integer.numberOfTrailingZeros(l);
             if (!f.test(op.applyAsLong(sum, data[l]))) {
                 while (l < N) {
-                    l <<= 1;
+                    l = l << 1;
                     if (f.test(op.applyAsLong(sum, data[l]))) {
                         sum = op.applyAsLong(sum, data[l]);
                         l++;
@@ -84,7 +115,7 @@ class SegTreei64 {
         return MAX;
     }
 
-    public int minLeft(int r, LongPredicate f) {
+    public int minLeft(int r, java.util.function.LongPredicate f) {
         inclusiveRangeCheck(r);
         if (!f.test(E)) {
             throw new IllegalArgumentException("Identity element must satisfy the condition.");
@@ -97,7 +128,7 @@ class SegTreei64 {
             while (r > 1 && (r & 1) == 1) r >>= 1;
             if (!f.test(op.applyAsLong(data[r], sum))) {
                 while (r < N) {
-                    r = (r << 1) | 1;
+                    r = r << 1 | 1;
                     if (f.test(op.applyAsLong(data[r], sum))) {
                         sum = op.applyAsLong(data[r], sum);
                         r--;
@@ -126,8 +157,41 @@ class SegTreei64 {
         }
     }
 
+    // **************** DEBUG **************** //
+
+    private int indent = 6;
+
+    public void setIndent(int newIndent) {
+        this.indent = newIndent;
+    }
+
     @Override
     public String toString() {
+        return toSimpleString();
+    }
+
+    public String toDetailedString() {
+        return toDetailedString(1, 0);
+    }
+
+    private String toDetailedString(int k, int sp) {
+        if (k >= N) return indent(sp) + data[k];
+        String s = "";
+        s += toDetailedString(k << 1 | 1, sp + indent);
+        s += "\n";
+        s += indent(sp) + data[k];
+        s += "\n";
+        s += toDetailedString(k << 1 | 0, sp + indent);
+        return s;
+    }
+
+    private static String indent(int n) {
+        StringBuilder sb = new StringBuilder();
+        while (n --> 0) sb.append(' ');
+        return sb.toString();
+    }
+
+    public String toSimpleString() {
         StringBuilder sb = new StringBuilder();
         sb.append("SegTreei64([");
         for (int i = 0; i < N; i++) {

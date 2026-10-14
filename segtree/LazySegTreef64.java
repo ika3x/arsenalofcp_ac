@@ -2,38 +2,38 @@ import java.util.*;
 import java.util.function.*;
 import java.io.*;
 
-class LazySegTreei64 {
+class LazySegTreef64 {
     @FunctionalInterface
-    public interface BiOperatori64 {
-        long apply(long val1, long val2);
+    public interface BiOperatorf64 {
+        double apply(double val1, double val2);
     }
     
     @FunctionalInterface
     public interface FSMapper {
-        long apply(long fVal, long sVal, long sSize);
+        double apply(double fVal, double sVal, double sSize);
     }
 
     @FunctionalInterface
     public interface BinarySearchBool {
-        boolean test(long v);
+        boolean test(double v);
     }
 
     final int MAX;
 
     final int N;
     final int Log;
-    final BiOperatori64 Op;
-    final long E;
+    final BiOperatorf64 Op;
+    final double E;
     final FSMapper Mapping;
-    final BiOperatori64 Composition;
-    final long Id;
+    final BiOperatorf64 Composition;
+    final double Id;
 
-    final long[] Dat;
-    final long[] Laz;
-    final long[] Siz;
+    final double[] Dat;
+    final double[] Laz;
+    final double[] Siz;
 
     @SuppressWarnings("unchecked")
-    public LazySegTreei64(int n, BiOperatori64 op, long e, FSMapper mapping, BiOperatori64 composition, long id) {
+    public LazySegTreef64(int n, BiOperatorf64 op, double e, FSMapper mapping, BiOperatorf64 composition, double id) {
         this.MAX = n;
         int k = 1;
         while (k < n) k <<= 1;
@@ -44,9 +44,9 @@ class LazySegTreei64 {
         this.Mapping = mapping;
         this.Composition = composition;
         this.Id = id;
-        this.Dat = new long[N << 1];
-        this.Laz = new long[N];
-        this.Siz = new long[N << 1];
+        this.Dat = new double[N << 1];
+        this.Laz = new double[N];
+        this.Siz = new double[N << 1];
         
         int curSize = N << 1;
         for (int i = 1; i < (N<<1); i++) {
@@ -60,12 +60,12 @@ class LazySegTreei64 {
         java.util.Arrays.fill(Laz, Id);
     }
 
-    public LazySegTreei64(long[] dat, BiOperatori64 op, long e, FSMapper mapping, BiOperatori64 composition, long id) {
+    public LazySegTreef64(double[] dat, BiOperatorf64 op, double e, FSMapper mapping, BiOperatorf64 composition, double id) {
         this(dat.length, op, e, mapping, composition, id);
         build(dat);
     }
 
-    private void build(long[] dat) {
+    private void build(double[] dat) {
         int l = dat.length;
         System.arraycopy(dat, 0, Dat, N, l);
         for (int i = N - 1; i > 0; i--) {
@@ -115,7 +115,7 @@ class LazySegTreei64 {
         }
     }
 
-    public void set(int p, long x) {
+    public void set(int p, double x) {
         exclusiveRangeCheck(p);
         p += N;
         pushTo(p);
@@ -123,14 +123,14 @@ class LazySegTreei64 {
         updateFrom(p);
     }
 
-    public long get(int p) {
+    public double get(int p) {
         exclusiveRangeCheck(p);
         p += N;
         pushTo(p);
         return Dat[p];
     }
 
-    public long prod(int l, int r) {
+    public double prod(int l, int r) {
         if (l > r) {
             throw new IllegalArgumentException(
                 String.format("Invalid range: [%d, %d)", l, r)
@@ -141,7 +141,7 @@ class LazySegTreei64 {
         if (l == r) return E;
         l += N; r += N;
         pushTo(l, r);
-        long sumLeft = E, sumRight = E;
+        double sumLeft = E, sumRight = E;
         while (l < r) {
             if ((l & 1) == 1) sumLeft = Op.apply(sumLeft, Dat[l++]);
             if ((r & 1) == 1) sumRight = Op.apply(Dat[--r], sumRight);
@@ -150,11 +150,11 @@ class LazySegTreei64 {
         return Op.apply(sumLeft, sumRight);
     }
 
-    public long allProd() {
+    public double allProd() {
         return Dat[1];
     }
 
-    public void apply(int p, long f) {
+    public void apply(int p, double f) {
         exclusiveRangeCheck(p);
         p += N;
         pushTo(p);
@@ -162,7 +162,7 @@ class LazySegTreei64 {
         updateFrom(p);
     }
 
-    public void apply(int l, int r, long f) {
+    public void apply(int l, int r, double f) {
         if (l > r) {
             throw new IllegalArgumentException(
                 String.format("Invalid range: [%d, %d)", l, r)
@@ -197,7 +197,7 @@ class LazySegTreei64 {
         if (l == MAX) return MAX;
         l += N;
         pushTo(l);
-        long sum = E;
+        double sum = E;
         do {
             l >>= Integer.numberOfTrailingZeros(l);
             if (!g.test(Op.apply(sum, Dat[l]))) {
@@ -225,7 +225,7 @@ class LazySegTreei64 {
         if (r == 0) return 0;
         r += N;
         pushTo(r - 1);
-        long sum = E;
+        double sum = E;
         do {
             r--;
             while (r > 1 && (r & 1) == 1) r >>= 1;
@@ -274,10 +274,10 @@ class LazySegTreei64 {
         return toSimpleString();
     }
 
-    private long[] simulatePushAll() {
-        long[] simDat = java.util.Arrays.copyOf(Dat, 2 * N);
-        long[] simLaz = java.util.Arrays.copyOf(Laz, 2 * N);
-        long[] simSiz = java.util.Arrays.copyOf(Siz, 2 * N);
+    private double[] simulatePushAll() {
+        double[] simDat = java.util.Arrays.copyOf(Dat, 2 * N);
+        double[] simLaz = java.util.Arrays.copyOf(Laz, 2 * N);
+        double[] simSiz = java.util.Arrays.copyOf(Siz, 2 * N);
         for (int k = 1; k < N; k++) {
             if (simLaz[k] == Id) continue;
             int lk = k << 1 | 0, rk = k << 1 | 1;
@@ -294,7 +294,7 @@ class LazySegTreei64 {
         return toDetailedString(1, 0, simulatePushAll());
     }
 
-    private String toDetailedString(int k, int sp, long[] dat) {
+    private String toDetailedString(int k, int sp, double[] dat) {
         if (k >= N) return indent(sp) + dat[k];
         String s = "";
         s += toDetailedString(k << 1 | 1, sp + indent, dat);
@@ -312,7 +312,7 @@ class LazySegTreei64 {
     }
 
     public String toSimpleString() {
-        long[] dat = simulatePushAll();
+        double[] dat = simulatePushAll();
         StringBuilder sb = new StringBuilder();
         sb.append('[');
         for (int i = 0; i < N; i++) {

@@ -1,9 +1,13 @@
+import java.util.Arrays;
+
 /**
  * PersistentSegTree
+ * 
  * ---- Methods ----
  *   build / new            : O(N)
  *   set                    : O(log N)
  *   get / prod / allProd   : O(log N)
+ *   maxRight / minLeft     : O(log N)
  *
  *   RAM                    : O(N + Q log N)
  */
@@ -29,6 +33,8 @@ class PersistentSegTree<S> {
                              S e,
                              int maxVersions) {
         this.MAX = n;
+        if (n == 1) n = 2;
+        
         int k = 1;
         while (k < n) k <<= 1;
         this.N = k;
@@ -46,7 +52,7 @@ class PersistentSegTree<S> {
         nodeCount = 1;
         val[NULL] = E;
 
-        roots[0] = buildEmpty(1, N);
+        roots[0] = buildEmpty(0, N);
         versionCount = 1;
     }
 
@@ -56,6 +62,8 @@ class PersistentSegTree<S> {
                              S e,
                              int maxVersions) {
         this.MAX = dat.length;
+        if (dat.length == 1) { dat = Arrays.copyOf(dat, 2); dat[1] = e; }
+        
         int k = 1;
         while (k < dat.length) k <<= 1;
         this.N = k;
@@ -73,7 +81,7 @@ class PersistentSegTree<S> {
         nodeCount = 1;
         val[NULL] = E;
 
-        roots[0] = build(dat, 1, N);
+        roots[0] = build(dat, 0, N);
         versionCount = 1;
     }
 
@@ -111,6 +119,256 @@ class PersistentSegTree<S> {
         return val[roots[version]];
     }
 
+    // -------- Boundary Search APIs --------
+
+    public int maxRight(int version,
+                        int l,
+                        java.util.function.Predicate<S> f) {
+        checkVersion(version);
+        inclusiveRangeCheck(l);
+
+        if (!f.test(E)) {
+            throw new IllegalArgumentException(
+                "Identity element must satisfy the condition.");
+        }
+        if (l == MAX) return MAX;
+
+        @SuppressWarnings("unchecked")
+        S[] sum = (S[]) new Object[1];
+        sum[0] = E;
+
+        int result = maxRight(
+            roots[version],
+            l,
+            0,
+            N,
+            sum,
+            f
+        );
+
+        return Math.min(result, MAX);
+    }
+
+    public int minLeft(int version,
+                       int r,
+                       java.util.function.Predicate<S> f) {
+        checkVersion(version);
+        inclusiveRangeCheck(r);
+
+        if (!f.test(E)) {
+            throw new IllegalArgumentException(
+                "Identity element must satisfy the condition.");
+        }
+        if (r == 0) return 0;
+
+        @SuppressWarnings("unchecked")
+        S[] sum = (S[]) new Object[1];
+        sum[0] = E;
+
+        int result = minLeft(
+            roots[version],
+            r,
+            0,
+            N,
+            sum,
+            f
+        );
+
+        return Math.max(0, Math.min(result, MAX));
+    }
+
+    // -------- Internal: Boundary Search --------
+
+    private int maxRight(int node,
+                         int l,
+                         int nodeL,
+                         int nodeR,
+                         S[] sum,
+                         java.util.function.Predicate<S> f) {
+        if (nodeR <= l) {
+            return nodeR;
+        }
+
+        if (l <= nodeL) {
+            S next = op.apply(sum[0], val[node]);
+
+            if (f.test(next)) {
+                sum[0] = next;
+                return nodeR;
+            }
+
+            return maxRightFail(
+                node,
+                nodeL,
+                nodeR,
+                sum,
+                f
+            );
+        }
+
+        int mid = (nodeL + nodeR) >> 1;
+
+        int result = maxRight(
+            left[node],
+            l,
+            nodeL,
+            mid,
+            sum,
+            f
+        );
+
+        if (result != mid) {
+            return result;
+        }
+
+        return maxRight(
+            right[node],
+            l,
+            mid,
+            nodeR,
+            sum,
+            f
+        );
+    }
+
+    private int maxRightFail(int node,
+                             int nodeL,
+                             int nodeR,
+                             S[] sum,
+                             java.util.function.Predicate<S> f) {
+        if (nodeR - nodeL <= 1) {
+            return nodeL;
+        }
+
+        int mid = (nodeL + nodeR) >> 1;
+        int lc = left[node];
+        int rc = right[node];
+
+        S next = op.apply(sum[0], val[lc]);
+
+        if (!f.test(next)) {
+            return maxRightFail(
+                lc,
+                nodeL,
+                mid,
+                sum,
+                f
+            );
+        }
+
+        sum[0] = next;
+
+        next = op.apply(sum[0], val[rc]);
+
+        if (!f.test(next)) {
+            return maxRightFail(
+                rc,
+                mid,
+                nodeR,
+                sum,
+                f
+            );
+        }
+
+        sum[0] = next;
+        return nodeR;
+    }
+
+    private int minLeft(int node,
+                        int r,
+                        int nodeL,
+                        int nodeR,
+                        S[] sum,
+                        java.util.function.Predicate<S> f) {
+        if (r <= nodeL) {
+            return nodeL;
+        }
+
+        if (nodeR <= r) {
+            S next = op.apply(val[node], sum[0]);
+
+            if (f.test(next)) {
+                sum[0] = next;
+                return nodeL;
+            }
+
+            return minLeftFail(
+                node,
+                nodeL,
+                nodeR,
+                sum,
+                f
+            );
+        }
+
+        int mid = (nodeL + nodeR) >> 1;
+
+        int result = minLeft(
+            right[node],
+            r,
+            mid,
+            nodeR,
+            sum,
+            f
+        );
+
+        if (result != mid) {
+            return result;
+        }
+
+        return minLeft(
+            left[node],
+            r,
+            nodeL,
+            mid,
+            sum,
+            f
+        );
+    }
+
+    private int minLeftFail(int node,
+                            int nodeL,
+                            int nodeR,
+                            S[] sum,
+                            java.util.function.Predicate<S> f) {
+        if (nodeR - nodeL <= 1) {
+            return nodeR;
+        }
+
+        int mid = (nodeL + nodeR) >> 1;
+        int lc = left[node];
+        int rc = right[node];
+
+        S next = op.apply(val[rc], sum[0]);
+
+        if (!f.test(next)) {
+            return minLeftFail(
+                rc,
+                mid,
+                nodeR,
+                sum,
+                f
+            );
+        }
+
+        sum[0] = next;
+
+        next = op.apply(val[lc], sum[0]);
+
+        if (!f.test(next)) {
+            return minLeftFail(
+                lc,
+                nodeL,
+                mid,
+                sum,
+                f
+            );
+        }
+
+        sum[0] = next;
+        return nodeL;
+    }
+
     // -------- Latest APIs --------
 
     public int setL(int p, S x) {
@@ -128,6 +386,17 @@ class PersistentSegTree<S> {
     public S allProdL() {
         return allProd(latestVersion());
     }
+
+    public int maxRightL(int l,
+                        java.util.function.Predicate<S> f) {
+        return maxRight(latestVersion(), l, f);
+    }
+
+    public int minLeftL(int r,
+                       java.util.function.Predicate<S> f) {
+        return minLeft(latestVersion(), r, f);
+    }
+
 
     // -------- Internal: Node Util --------
 
