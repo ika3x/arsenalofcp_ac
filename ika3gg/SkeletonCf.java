@@ -175,12 +175,12 @@ public class SkeletonCf {
             int e = Math.min(ar.length, endIdx);
 
             if (startIdx == e) {
-                out.println();
+                super.println();
                 return;
             }
             if (startIdx >= e || startIdx < 0) {
                 throw new IllegalArgumentException(
-                    "Length=" + ar.length + ", unable to print "," [" + startIdx + "," + endIdx + ")"
+                    "Length=" + ar.length + ", unable to print " + " [" + startIdx + "," + endIdx + ")"
                 );
             }
             StringBuilder sb = new StringBuilder();
@@ -202,12 +202,12 @@ public class SkeletonCf {
 
             
             if (startIdx == e) {
-                out.println();
+                super.println();
                 return;
             }
             if (startIdx >= e || startIdx < 0) {
                 throw new IllegalArgumentException(
-                    "Length=" + ar.length + ", unable to print "," [" + startIdx + "," + endIdx + ")"
+                    "Length=" + ar.length + ", unable to print " + " [" + startIdx + "," + endIdx + ")"
                 );
             }
             StringBuilder sb = new StringBuilder();
