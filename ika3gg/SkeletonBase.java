@@ -144,8 +144,14 @@ public class SkeletonBase {
             if (endIdx < 0) {endIdx = ar.length;}
             int e = Math.min(ar.length, endIdx);
 
+            if (startIdx == e) {
+                out.println();
+                return;
+            }
             if (startIdx >= e || startIdx < 0) {
-                throw new IllegalArgumentException("Wrong index (start).");
+                throw new IllegalArgumentException(
+                    "Length=" + ar.length + ", unable to print "," [" + startIdx + "," + endIdx + ")"
+                );
             }
             StringBuilder sb = new StringBuilder();
             sb.append(ar[startIdx]);
@@ -164,8 +170,15 @@ public class SkeletonBase {
             if (endIdx < 0) {endIdx = ar.length;}
             int e = Math.min(ar.length, endIdx);
 
+            
+            if (startIdx == e) {
+                out.println();
+                return;
+            }
             if (startIdx >= e || startIdx < 0) {
-                throw new IllegalArgumentException("Wrong index (start).");
+                throw new IllegalArgumentException(
+                    "Length=" + ar.length + ", unable to print "," [" + startIdx + "," + endIdx + ")"
+                );
             }
             StringBuilder sb = new StringBuilder();
             sb.append(ar[startIdx]);
@@ -178,7 +191,7 @@ public class SkeletonBase {
 
         public <T> void println(List<T> list) {
             if (list == null) {
-                throw new NullPointerException("Couldn't print the list beacuse it is null.");
+                throw new NullPointerException("Couldn't print the list because it was null.");
             }
 
             if (list.isEmpty()) {
@@ -210,12 +223,12 @@ public class SkeletonBase {
 
         @Override
         public void println(double val) {
-            super.printf("%.25f\n", val);
+            super.printf("%.16f\n", val);
         }
 
         @Override
         public void print(double val) {
-            super.printf("%.25f", val);
+            super.printf("%.16f", val);
         }
 
         public void yn_println(boolean bool) {
