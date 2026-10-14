@@ -128,4 +128,44 @@ public class BsAlias {
     public static int countRangeClosed(long[] arr, long fromInclusive, long toInclusive) {
         return upperBound(arr, toInclusive) - lowerBound(arr, fromInclusive);
     }
+
+    public static int ceiling(int[] arr, int key) {
+        int index = lowerBound(arr, key);
+        return index < arr.length ? arr[index] : Integer.MAX_VALUE;
+    }
+
+    public static long ceiling(long[] arr, long key) {
+        int index = lowerBound(arr, key);
+        return index < arr.length ? arr[index] : Long.MAX_VALUE;
+    }
+
+    public static int higher(int[] arr, int key) {
+        int index = upperBound(arr, key);
+        return index < arr.length ? arr[index] : Integer.MAX_VALUE;
+    }
+
+    public static long higher(long[] arr, long key) {
+        int index = upperBound(arr, key);
+        return index < arr.length ? arr[index] : Long.MAX_VALUE;
+    }
+
+    public static int lower(int[] arr, int key) {
+        int index = lowerBound(arr, key)-1;
+        return index >= 0 ? arr[index] : Integer.MIN_VALUE;
+    }
+
+    public static long lower(long[] arr, long key) {
+        int index = lowerBound(arr, key)-1;
+        return index >= 0 ? arr[index] : Long.MIN_VALUE;
+    }
+
+    public static int floor(int[] arr, int key) {
+        int index = upperBound(arr, key)-1;
+        return index >= 0 ? arr[index] : Integer.MIN_VALUE;
+    }
+
+    public static long floor(long[] arr, long key) {
+        int index = upperBound(arr, key)-1;
+        return index >= 0 ? arr[index] : Long.MIN_VALUE;
+    }
 }
